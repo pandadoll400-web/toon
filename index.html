@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Splat Notebook</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            /* Î∞∞Í≤Ω: ?ÖÎ°ú?úÌï¥Ï£ºÏã† Î≤ΩÎèå ?òÏù∏???¥Î?ÏßÄ ?ÅÏö© */
+            background-image: url('background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* ?∏Ìä∏ ?îÏûê??*/
+        #notebook {
+            background-color: #fffdf5; /* ?ΩÍ∞Ñ ?ÑÎü∞ Ï¢ÖÏù¥ ??*/
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+            border-radius: 5px 20px 20px 5px;
+            position: relative;
+            /* ?∏Ìä∏ Ï§ÑÎ¨¥??(Í∞ÄÎ°úÏ§Ñ) */
+            background-image: repeating-linear-gradient(transparent, transparent 29px, #add8e6 30px);
+            background-position: 0 30px;
+        }
+
+        /* ?∏Ìä∏ ?ºÏ™Ω Îπ®Í∞Ñ ??(ÎßàÏßÑ) */
+        #notebook::before {
+            content: '';
+            position: absolute;
+            left: 40px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #ff9999;
+        }
+
+        #canvas {
+            cursor: crosshair;
+            display: block;
+            border-radius: 5px 20px 20px 5px;
+        }
+
+        /* ?¥Î∞î UI */
+        #toolbar {
+            margin-top: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 25px;
+            border-radius: 30px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+        }
+
+        /* ?âÏÉÅ Î≤ÑÌäº */
+        .color-btn {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+        }
+        .color-btn:hover { transform: scale(1.15); }
+        .color-btn.selected { 
+            border: 3px solid #333; 
+            transform: scale(1.2); 
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+        }
+
+        #clear-btn {
+            padding: 8px 20px;
+            border: none;
+            background: #ff4757;
+            color: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        #clear-btn:hover { background: #ff6b81; }
+    </style>
+</head>
+<body>
+
+    <!-- ?∏Ìä∏ ?ÅÏó≠ -->
+    <div id="notebook">
+        <!-- Ï∫îÎ≤Ñ??(Í∑∏Î¶º Í∑∏Î¶¨??Í≥? -->
+        <canvas id="canvas" width="700" height="500"></canvas>
+    </div>
+
+    <!-- ?âÏÉÅ Î∞??ÑÍµ¨ ?†ÌÉù ?¥Î∞î -->
+    <div id="toolbar">
+        <div class="color-btn selected" style="background-color: #000000;" data-color="#000000"></div>
+        <div class="color-btn" style="background-color: #ff007f;" data-color="#ff007f"></div>
+        <div class="color-btn" style="background-color: #00f0ff;" data-color="#00f0ff"></div>
+        <div class="color-btn" style="background-color: #00ff00;" data-color="#00ff00"></div>
+        <div class="color-btn" style="background-color: #ffff00;" data-color="#ffff00"></div>
+        
+        <!-- ?êÏú† ?âÏÉÅ ?†ÌÉùÍ∏?-->
+        <input type="color" id="custom-color" value="#000000" style="margin-left: 10px; cursor: pointer;">
+        
+        <!-- Î∏åÎü¨??ÍµµÍ∏∞ Ï°∞Ï†à -->
+        <div style="margin-left: 20px; display: flex; align-items: center; gap: 5px;">
+            <span style="font-size: 14px; color: #333;">ÍµµÍ∏∞:</span>
+            <input type="range" id="size-slider" min="2" max="50" value="8">
+        </div>
+        
+        <button id="clear-btn" style="margin-left: 20px;">?ÑÏ≤¥ ÏßÄ?∞Í∏∞</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const colorBtns = document.querySelectorAll('.color-btn');
+        const customColor = document.getElementById('custom-color');
+        const sizeSlider = document.getElementById('size-slider');
+        const clearBtn = document.getElementById('clear-btn');
+
+        let isDrawing = false;
+        let currentColor = '#000000';
+        let currentSize = 8;
+        let lastX = 0;
+        let lastY = 0;
+
+        // Î∏åÎü¨???ùÏùÑ ?•Í?Í≤?Ï≤òÎ¶¨?òÏó¨ ?êÏó∞?§ÎüΩÍ≤?ÎßåÎì¶
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+
+        // 1. ?âÏÉÅ ?†ÌÉù ?¥Î≤§??        colorBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                colorBtns.forEach(b => b.classList.remove('selected'));
+                e.target.classList.add('selected');
+                currentColor = e.target.getAttribute('data-color');
+                customColor.value = currentColor; // Ïª§Ïä§?Ä Ïª¨Îü¨ Í∞íÎèÑ ?ôÍ∏∞??            });
+        });
+
+        customColor.addEventListener('input', (e) => {
+            colorBtns.forEach(b => b.classList.remove('selected'));
+            currentColor = e.target.value;
+        });
+
+        // 2. ÍµµÍ∏∞ Ï°∞Ï†à ?¥Î≤§??        sizeSlider.addEventListener('input', (e) => {
+            currentSize = e.target.value;
+        });
+
+        // 3. ÏßÄ?∞Í∏∞ ?¥Î≤§??        clearBtn.addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        });
+
+        // 4. Í∑∏Î¶¨Í∏?Î°úÏßÅ (ÎßàÏö∞???¥Î≤§??
+        function draw(e) {
+            if (!isDrawing) return;
+            
+            // Ï∫îÎ≤Ñ???¥Ïóê?úÏùò ?ïÌôï??ÎßàÏö∞??Ï¢åÌëú Í≥ÑÏÇ∞
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY); // ?¥Ï†Ñ ?ÑÏπò?êÏÑú
+            ctx.lineTo(x, y);         // ?ÑÏû¨ ?ÑÏπòÍπåÏ? ?†ÏùÑ Í∏ãÍ∏∞
+            ctx.strokeStyle = currentColor;
+            ctx.lineWidth = currentSize;
+            ctx.stroke();
+
+            // ?ÑÏπò ?ÖÎç∞?¥Ìä∏
+            lastX = x;
+            lastY = y;
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            isDrawing = true;
+            const rect = canvas.getBoundingClientRect();
+            lastX = e.clientX - rect.left;
+            lastY = e.clientY - rect.top;
+        });
+
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', () => isDrawing = false);
+        canvas.addEventListener('mouseout', () => isDrawing = false); // Ï∫îÎ≤Ñ??Î∞ñÏúºÎ°??òÍ?Î©?Í∑∏Î¶¨Í∏?Ï§ëÏ?
+    </script>
+</body>
+</html>
