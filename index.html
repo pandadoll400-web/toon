@@ -12,7 +12,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            /* 배경: ?�로?�해주신 벽돌 ?�인???��?지 ?�용 */
+            /* 배경: 업로드해주신 벽돌 페인트 이미지 적용 */
             background-image: url('background.jpg');
             background-size: cover;
             background-position: center;
@@ -20,18 +20,18 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        /* ?�트 ?�자??*/
+        /* 노트 디자인 */
         #notebook {
-            background-color: #fffdf5; /* ?�간 ?�런 종이 ??*/
+            background-color: #fffdf5; /* 약간 누런 종이 색 */
             box-shadow: 0 15px 35px rgba(0,0,0,0.6);
             border-radius: 5px 20px 20px 5px;
             position: relative;
-            /* ?�트 줄무??(가로줄) */
+            /* 노트 줄무늬 (가로줄) */
             background-image: repeating-linear-gradient(transparent, transparent 29px, #add8e6 30px);
             background-position: 0 30px;
         }
 
-        /* ?�트 ?�쪽 빨간 ??(마진) */
+        /* 노트 왼쪽 빨간 선 (마진) */
         #notebook::before {
             content: '';
             position: absolute;
@@ -48,7 +48,7 @@
             border-radius: 5px 20px 20px 5px;
         }
 
-        /* ?�바 UI */
+        /* 툴바 UI */
         #toolbar {
             margin-top: 30px;
             background: rgba(255, 255, 255, 0.95);
@@ -60,7 +60,7 @@
             box-shadow: 0 8px 20px rgba(0,0,0,0.4);
         }
 
-        /* ?�상 버튼 */
+        /* 색상 버튼 */
         .color-btn {
             width: 35px;
             height: 35px;
@@ -92,13 +92,13 @@
 </head>
 <body>
 
-    <!-- ?�트 ?�역 -->
+    <!-- 노트 영역 -->
     <div id="notebook">
-        <!-- 캔버??(그림 그리??�? -->
+        <!-- 캔버스 (그림 그리는 곳) -->
         <canvas id="canvas" width="700" height="500"></canvas>
     </div>
 
-    <!-- ?�상 �??�구 ?�택 ?�바 -->
+    <!-- 색상 및 도구 선택 툴바 -->
     <div id="toolbar">
         <div class="color-btn selected" style="background-color: #000000;" data-color="#000000"></div>
         <div class="color-btn" style="background-color: #ff007f;" data-color="#ff007f"></div>
@@ -106,16 +106,16 @@
         <div class="color-btn" style="background-color: #00ff00;" data-color="#00ff00"></div>
         <div class="color-btn" style="background-color: #ffff00;" data-color="#ffff00"></div>
         
-        <!-- ?�유 ?�상 ?�택�?-->
+        <!-- 자유 색상 선택기 -->
         <input type="color" id="custom-color" value="#000000" style="margin-left: 10px; cursor: pointer;">
         
-        <!-- 브러??굵기 조절 -->
+        <!-- 브러시 굵기 조절 -->
         <div style="margin-left: 20px; display: flex; align-items: center; gap: 5px;">
             <span style="font-size: 14px; color: #333;">굵기:</span>
             <input type="range" id="size-slider" min="2" max="50" value="8">
         </div>
         
-        <button id="clear-btn" style="margin-left: 20px;">?�체 지?�기</button>
+        <button id="clear-btn" style="margin-left: 20px;">전체 지우기</button>
     </div>
 
     <script>
@@ -132,16 +132,18 @@
         let lastX = 0;
         let lastY = 0;
 
-        // 브러???�을 ?��?�?처리?�여 ?�연?�럽�?만듦
+        // 브러시 끝을 둥글게 처리하여 자연스럽게 만듦
         ctx.lineJoin = 'round';
         ctx.lineCap = 'round';
 
-        // 1. ?�상 ?�택 ?�벤??        colorBtns.forEach(btn => {
+        // 1. 색상 선택 이벤트
+        colorBtns.forEach(btn => {
             btn.addEventListener('click', (e) => {
                 colorBtns.forEach(b => b.classList.remove('selected'));
                 e.target.classList.add('selected');
                 currentColor = e.target.getAttribute('data-color');
-                customColor.value = currentColor; // 커스?� 컬러 값도 ?�기??            });
+                customColor.value = currentColor; // 커스텀 컬러 값도 동기화
+            });
         });
 
         customColor.addEventListener('input', (e) => {
@@ -149,31 +151,33 @@
             currentColor = e.target.value;
         });
 
-        // 2. 굵기 조절 ?�벤??        sizeSlider.addEventListener('input', (e) => {
+        // 2. 굵기 조절 이벤트
+        sizeSlider.addEventListener('input', (e) => {
             currentSize = e.target.value;
         });
 
-        // 3. 지?�기 ?�벤??        clearBtn.addEventListener('click', () => {
+        // 3. 지우기 이벤트
+        clearBtn.addEventListener('click', () => {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         });
 
-        // 4. 그리�?로직 (마우???�벤??
+        // 4. 그리기 로직 (마우스 이벤트)
         function draw(e) {
             if (!isDrawing) return;
             
-            // 캔버???�에?�의 ?�확??마우??좌표 계산
+            // 캔버스 내에서의 정확한 마우스 좌표 계산
             const rect = canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
 
             ctx.beginPath();
-            ctx.moveTo(lastX, lastY); // ?�전 ?�치?�서
-            ctx.lineTo(x, y);         // ?�재 ?�치까�? ?�을 긋기
+            ctx.moveTo(lastX, lastY); // 이전 위치에서
+            ctx.lineTo(x, y);         // 현재 위치까지 선을 긋기
             ctx.strokeStyle = currentColor;
             ctx.lineWidth = currentSize;
             ctx.stroke();
 
-            // ?�치 ?�데?�트
+            // 위치 업데이트
             lastX = x;
             lastY = y;
         }
@@ -187,7 +191,7 @@
 
         canvas.addEventListener('mousemove', draw);
         canvas.addEventListener('mouseup', () => isDrawing = false);
-        canvas.addEventListener('mouseout', () => isDrawing = false); // 캔버??밖으�??��?�?그리�?중�?
+        canvas.addEventListener('mouseout', () => isDrawing = false); // 캔버스 밖으로 나가면 그리기 중지
     </script>
 </body>
 </html>
